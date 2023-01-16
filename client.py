@@ -9,8 +9,7 @@ import threading
 
 
 class SpiritedAway(QWidget):
-    
-    
+       
     def __init__(self):    
         super().__init__()
         
@@ -58,24 +57,24 @@ class SpiritedAway(QWidget):
         
         radiobutton = QRadioButton("Start")
         radiobutton.setChecked(False)
-        radiobutton.toggled.connect(self.onClicked)
+        radiobutton.toggled.connect(self.on_clicked)
         layout.addWidget(radiobutton, 0, 0)
 
         
-        self.initUI()
-        # self.checkForUserActivity()
+        self.init_ui()
+        # self.check_for_user_activity()
         
-    def initUI(self):
+    def init_ui(self):
         self.setWindowTitle('SpiritedAway')
 
         # Grid Layout
         # grid = QGridLayout()
         # self.setLayout(grid)
 
-        self.setWindowIcon(QIcon('./images/clock.png'))
+        self.setWindowIcon(QIcon('./images/XD.png'))
 
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('./images/clock.png'))
+        self.tray_icon.setIcon(QIcon('./images/XD.png'))
         self.tray_icon.setVisible(True)
 
         tray_menu = QMenu()
@@ -91,19 +90,19 @@ class SpiritedAway(QWidget):
         self.tray_icon.setContextMenu(tray_menu)
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.showTime)
+        self.timer.timeout.connect(self.show_time)
         self.timer.start(1000)
 
-        self.showTime()
+        self.show_time()
 
-    def showTime(self):
+    def show_time(self):
         time = QTime.currentTime()
         date = QDate.currentDate()
         time_text = time.toString('hh:mm')
         date_text = date.toString('ddd, dd MMM yyyy')
         self.tray_icon.setToolTip(f'{time_text} \n {date_text}')
         
-    def checkForUserActivity(self):
+    def check_for_user_activity(self):
         while self.START:
             if time.time() - self.last_input_time > self.INACTIVITY_TIMEOUT:
                 # User is inactive, do something
@@ -142,17 +141,17 @@ class SpiritedAway(QWidget):
         self.INACTIVITY_TIMEOUT = self.timeout_spinbox.value()
         self.timeout_label.setText("Inactivity timeout: %d seconds" % self.INACTIVITY_TIMEOUT)
         
-    def onClicked(self):
+    def on_clicked(self):
         radioButton = self.sender()
         if radioButton.isChecked():
             self.START = True
             try:
-                th = threading.Thread(target=self.checkForUserActivity)
+                th = threading.Thread(target=self.check_for_user_activity)
                 th.start()
             except:
                 print("An exception occurred")
                 time.sleep(1600)
-            # th = threading.Thread(target=self.checkForUserActivity)
+            # th = threading.Thread(target=self.check_for_user_activity)
             # th.start()
             
             print("Started to monitor user activity...")
@@ -161,25 +160,38 @@ class SpiritedAway(QWidget):
             self.START = False
             print("Stopped monitoring!")
             
- 
-    def hideEvent(self, event):
-        event.ignore()
+    # def hideEvent(self, event):
+    #     event.ignore()
+    #     self.hide()
+    #     self.tray_icon.showMessage(
+    #         "Tray Program",
+    #         "Application was minimized to Tray",
+    #         QSystemTrayIcon.Information,
+    #         1000
+    #     )
+        
+    def minimize(self):
         self.hide()
+
+    # needs to override QWidgets default close event
+    def closeEvent(self, event):
+        event.ignore()
         self.tray_icon.showMessage(
-            "Tray Program",
+            "Spirited Away",
             "Application was minimized to Tray",
             QSystemTrayIcon.Information,
-            1000
+            2000
         )
-        
+        self.hide()
         
 
-  
-            
-
-if __name__ == '__main__':
+def main():
     app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
     clock = SpiritedAway()
     clock.show()
     sys.exit(app.exec_())
-    
+
+  
+if __name__ == '__main__':
+    main()
