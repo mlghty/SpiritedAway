@@ -80,7 +80,7 @@ class SpiritedAway(QWidget):
         quit_action = QAction('Quit', self)
         show_action.triggered.connect(self.show)
         hide_action.triggered.connect(self.hide)
-        quit_action.triggered.connect(quit)
+        quit_action.triggered.connect(self.quit_app)
         tray_menu.addAction(show_action)
         tray_menu.addAction(hide_action)
         tray_menu.addAction(quit_action)
@@ -168,7 +168,10 @@ class SpiritedAway(QWidget):
             QSystemTrayIcon.Information,
             2000
         )
-        self.hide()  
+        self.hide() 
+    
+    def quit_app():
+        quit() 
 
 def main():
     app = QApplication(sys.argv)
