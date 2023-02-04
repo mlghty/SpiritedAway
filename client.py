@@ -14,24 +14,21 @@ class SpiritedAway(QWidget):
         super().__init__()
         
         width = 300
-        height = 400
+        height = 200
 
         self.setFixedWidth(width)
         self.setFixedHeight(height)
         
-    
         # Check for user inactivity
         self.last_input_time = time.time()
         self.last_cursor_tuple =  win32api.GetCursorPos()
         self.INACTIVITY_TIMEOUT = 500  # Timeout in seconds
         self.MINIMIZED = False
         self.START = False
-        
-        
+          
         layout = QGridLayout()
         self.setLayout(layout)
 
-       
          # Create a spin box to allow the user to enter the timeout value
         self.timeout_spinbox = QSpinBox()
 
@@ -83,55 +80,44 @@ class SpiritedAway(QWidget):
         quit_action = QAction('Quit', self)
         show_action.triggered.connect(self.show)
         hide_action.triggered.connect(self.hide)
-        quit_action.triggered.connect(self.close)
+        quit_action.triggered.connect(quit)
         tray_menu.addAction(show_action)
         tray_menu.addAction(hide_action)
         tray_menu.addAction(quit_action)
         self.tray_icon.setContextMenu(tray_menu)
 
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.show_time)
+        self.timer.timeout.connect(self.show_info)
         self.timer.start(1000)
 
-        self.show_time()
+        self.show_info()
 
-    def show_time(self):
-        time = QTime.currentTime()
-        date = QDate.currentDate()
-        time_text = time.toString('hh:mm')
-        date_text = date.toString('ddd, dd MMM yyyy')
-        self.tray_icon.setToolTip(f'{time_text} \n {date_text}')
+    def show_info(self):
+        time_text = "Hi I'm watching for user activity!"
+        self.tray_icon.setToolTip(f'{time_text}')
         
     def check_for_user_activity(self):
         while self.START:
             if time.time() - self.last_input_time > self.INACTIVITY_TIMEOUT:
-                # User is inactive, do something
-                print("User is inactive!")
-                
                 if not self.MINIMIZED:
                     self.MINIMIZED = True
-                    print("minimizing...")
                     pyautogui.hotkey('win', 'm')
-
             else:
-                # User is active, do something else
-                print("User is active! Timeout: ", self.INACTIVITY_TIMEOUT)
                 if self.MINIMIZED:
                     pyautogui.hotkey('win', 'shift', 'm')
                     self.MINIMIZED = False
 
             # Check for user input from the mouse or keyboard
-            if win32api.GetAsyncKeyState(0x0001):  # Left mouse button
+            if win32api.GetAsyncKeyState(0x0001):  # Left mouse
                 self.last_input_time = time.time()
-            if win32api.GetAsyncKeyState(0x0002):  # Right mouse button
+            if win32api.GetAsyncKeyState(0x0002):  # Right mouse 
                 self.last_input_time = time.time()
-            if win32api.GetAsyncKeyState(0x0004):  # Middle mouse button (or mouse wheel)
+            if win32api.GetAsyncKeyState(0x0004):  
                 self.last_input_time = time.time()
             if win32api.GetAsyncKeyState(0x0100):  # Keyboard key
                 self.last_input_time = time.time()
             if win32api.GetCursorPos():  # Cursor position
                 self.temp_cursor_tuple = win32api.GetCursorPos()
-                # print(temp_cursor_tuple)
                 if self.temp_cursor_tuple != self.last_cursor_tuple:
                     self.last_input_time = time.time()
                     self.last_cursor_tuple = win32api.GetCursorPos()
@@ -160,15 +146,15 @@ class SpiritedAway(QWidget):
             self.START = False
             print("Stopped monitoring!")
             
-    # def hideEvent(self, event):
-    #     event.ignore()
-    #     self.hide()
-    #     self.tray_icon.showMessage(
-    #         "Tray Program",
-    #         "Application was minimized to Tray",
-    #         QSystemTrayIcon.Information,
-    #         1000
-    #     )
+    def hideEvent(self, event):
+        event.ignore()
+        self.hide()
+        self.tray_icon.showMessage(
+            "Tray Program",
+            "Application was minimized to Tray",
+            QSystemTrayIcon.Information,
+            1000
+        )
         
     def minimize(self):
         self.hide()
@@ -182,8 +168,7 @@ class SpiritedAway(QWidget):
             QSystemTrayIcon.Information,
             2000
         )
-        self.hide()
-        
+        self.hide()  
 
 def main():
     app = QApplication(sys.argv)
