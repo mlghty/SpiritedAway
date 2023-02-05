@@ -2,22 +2,35 @@ import sys
 import time
 import win32api
 import pyautogui
+import os
 from PyQt5.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QAction,QLabel,QSpinBox,QGridLayout,QRadioButton
 from PyQt5.QtCore import QTime, QDate, QTimer
 from PyQt5.QtGui import QIcon
 import threading
 
 
+def resource_path(relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path) 
+    
+
 class SpiritedAway(QWidget):
        
     def __init__(self):    
         super().__init__()
         
-        width = 300
-        height = 200
+        self.width = 300
+        self.height = 200
+        self.image_path = resource_path('./images/XD.png')
 
-        self.setFixedWidth(width)
-        self.setFixedHeight(height)
+        self.setFixedWidth(self.width)
+        self.setFixedHeight(self.height)
         
         # Check for user inactivity
         self.last_input_time = time.time()
@@ -68,10 +81,10 @@ class SpiritedAway(QWidget):
         # grid = QGridLayout()
         # self.setLayout(grid)
 
-        self.setWindowIcon(QIcon('./images/XD.png'))
+        self.setWindowIcon(QIcon(self.image_path))
 
         self.tray_icon = QSystemTrayIcon(self)
-        self.tray_icon.setIcon(QIcon('./images/XD.png'))
+        self.tray_icon.setIcon(QIcon(self.image_path))
         self.tray_icon.setVisible(True)
 
         tray_menu = QMenu()
@@ -170,12 +183,15 @@ class SpiritedAway(QWidget):
         )
         self.hide() 
     
-    def quit_app():
-        quit() 
+    def quit_app(self):
+        quit()
+    
+    
 
 def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
+    app.setWindowIcon(QIcon(resource_path('./images/XD.ico')))
     clock = SpiritedAway()
     clock.show()
     sys.exit(app.exec_())
