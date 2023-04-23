@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QActi
 from PyQt5.QtCore import QTime, QDate, QTimer
 from PyQt5.QtGui import QIcon
 import threading
+import datetime # remove using for testing
 
 
 def resource_path(relative_path):
@@ -110,7 +111,18 @@ class SpiritedAway(QWidget):
         self.tray_icon.setToolTip(f'{time_text}')
         
     def check_for_user_activity(self):
+    
+        start_time = datetime.datetime.now()
+
+
         while self.START:
+            
+            # i = 0
+            # if  (datetime.datetime.now() - start_time).total_seconds() > 20:
+            #     i+=1
+            #     print("LOOPING",i)
+            #     start_time = datetime.datetime.now()
+     
             if time.time() - self.last_input_time > self.INACTIVITY_TIMEOUT:
                 if not self.MINIMIZED:
                     self.MINIMIZED = True
@@ -119,21 +131,25 @@ class SpiritedAway(QWidget):
                 if self.MINIMIZED:
                     pyautogui.hotkey('win', 'shift', 'm')
                     self.MINIMIZED = False
-
-            # Check for user input from the mouse or keyboard
-            if win32api.GetAsyncKeyState(0x0001):  # Left mouse
-                self.last_input_time = time.time()
-            if win32api.GetAsyncKeyState(0x0002):  # Right mouse 
-                self.last_input_time = time.time()
-            if win32api.GetAsyncKeyState(0x0004):  
-                self.last_input_time = time.time()
-            if win32api.GetAsyncKeyState(0x0100):  # Keyboard key
-                self.last_input_time = time.time()
-            if win32api.GetCursorPos():  # Cursor position
-                self.temp_cursor_tuple = win32api.GetCursorPos()
-                if self.temp_cursor_tuple != self.last_cursor_tuple:
+                    
+            # neccessary can not access GetCurosrPos when pc goes to sleep        
+            try:
+                # Check for user input from the mouse or keyboard
+                if win32api.GetAsyncKeyState(0x0001):  # Left mouse
                     self.last_input_time = time.time()
-                    self.last_cursor_tuple = win32api.GetCursorPos()
+                if win32api.GetAsyncKeyState(0x0002):  # Right mouse 
+                    self.last_input_time = time.time()
+                if win32api.GetAsyncKeyState(0x0004):  
+                    self.last_input_time = time.time()
+                if win32api.GetAsyncKeyState(0x0100):  # Keyboard key
+                    self.last_input_time = time.time()
+                if win32api.GetCursorPos():  # Cursor position
+                    self.temp_cursor_tuple = win32api.GetCursorPos()
+                    if self.temp_cursor_tuple != self.last_cursor_tuple:
+                        self.last_input_time = time.time()
+                        self.last_cursor_tuple = win32api.GetCursorPos()
+            except Exception as e:
+                print("Error: " , e)
                     
     def timeout_changed(self):
         # Update the timeout value when the user changes it in the spin box
