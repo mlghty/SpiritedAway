@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import QApplication, QWidget, QSystemTrayIcon, QMenu, QActi
 from PyQt5.QtCore import QTime, QDate, QTimer
 from PyQt5.QtGui import QIcon
 import threading
-import datetime # remove using for testing
 
 
 def resource_path(relative_path):
@@ -43,7 +42,7 @@ class SpiritedAway(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
 
-         # Create a spin box to allow the user to enter the timeout value
+      
         self.timeout_spinbox = QSpinBox()
 
         self.timeout_spinbox.setRange(1, 600)  # Allow timeout values between 1 and 600 seconds
@@ -55,7 +54,6 @@ class SpiritedAway(QWidget):
         # timeout_spinbox.setGeometry(10, 30, 50, 30)
 
 
-        # Create a label to display the timeout value
         self.timeout_label = QLabel()
         self.timeout_label.setText("Inactivity timeout: %d seconds" % self.INACTIVITY_TIMEOUT)
         layout.addWidget(self.timeout_label,1,0)
@@ -112,17 +110,8 @@ class SpiritedAway(QWidget):
         
     def check_for_user_activity(self):
     
-        start_time = datetime.datetime.now()
-
-
         while self.START:
-            
-            # i = 0
-            # if  (datetime.datetime.now() - start_time).total_seconds() > 20:
-            #     i+=1
-            #     print("LOOPING",i)
-            #     start_time = datetime.datetime.now()
-     
+             
             if time.time() - self.last_input_time > self.INACTIVITY_TIMEOUT:
                 if not self.MINIMIZED:
                     self.MINIMIZED = True
