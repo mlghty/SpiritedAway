@@ -417,6 +417,9 @@ class SpiritedAway(QWidget):
                 else:
                     # Running as script
                     app_path = os.path.abspath(sys.argv[0])
+                
+                # Ensure the path is properly quoted and escaped
+                app_path = f'"{os.path.normpath(app_path)}"'
                     
                 # Add startup parameters
                 startup_args = ''
@@ -424,8 +427,14 @@ class SpiritedAway(QWidget):
                     startup_args += ' --start-minimized'
                 if self.autostart_monitoring_checkbox.isChecked():
                     startup_args += ' --start-monitoring'
-                    
-                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, f'"{app_path}"{startup_args}')
+                
+                # Create the full registry command
+                registry_value = f'{app_path}{startup_args}'
+                
+                # Log the exact registry value being set
+                self.log_message(f"Setting autostart registry value: {registry_value}")
+                
+                winreg.SetValueEx(key, app_name, 0, winreg.REG_SZ, registry_value)
                 self.log_message("Autostart enabled - Application will start with Windows")
                 self.tray_icon.showMessage(
                     self.app_name,
