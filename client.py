@@ -417,10 +417,13 @@ class SpiritedAway(QWidget):
                 else:
                     # Running as script
                     app_path = os.path.abspath(sys.argv[0])
+                    # If running as script, ensure we're using python to execute it
+                    if app_path.endswith('.py'):
+                        python_exe = sys.executable
+                        app_path = f'"{python_exe}" "{app_path}"'
+                    else:
+                        app_path = f'"{app_path}"'
                 
-                # Ensure the path is properly quoted and escaped
-                app_path = f'"{os.path.normpath(app_path)}"'
-                    
                 # Add startup parameters
                 startup_args = ''
                 if self.start_minimized_checkbox.isChecked():
