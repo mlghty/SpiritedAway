@@ -78,6 +78,7 @@ if os.path.exists("build"):
     shutil.rmtree("build")
 
 # Create executable with PyInstaller
+print("Building executable...")
 PyInstaller.__main__.run([
     'client.py',
     '--name=SpiritedAway',
@@ -87,22 +88,27 @@ PyInstaller.__main__.run([
     '--add-data=./images/XD.png;images/',
     '--add-data=./images/XD.ico;images/',
     '--version-file=version.txt',
-    # Add hidden imports to ensure all dependencies are included
     '--hidden-import=win32api',
     '--hidden-import=win32con',
     '--hidden-import=pyautogui',
-    # Exclude unnecessary packages to reduce size
     '--exclude-module=matplotlib',
     '--exclude-module=numpy',
     '--exclude-module=PIL',
-    # Add high DPI support
-    '--uac-admin',  # Request admin privileges for registry access
-    '--win-private-assemblies',
+    '--uac-admin',
     '--win-no-prefer-redirects',
+    '--distpath=./dist',
+    '--workpath=./build'
 ])
+
+# Verify the executable was created
+exe_path = os.path.join('dist', 'SpiritedAway.exe')
+if os.path.exists(exe_path):
+    print(f"\nBuild successful! Executable created at: {exe_path}")
+    print(f"File size: {os.path.getsize(exe_path) / (1024*1024):.2f} MB")
+else:
+    print("\nError: Executable not found in dist folder!")
+    sys.exit(1)
 
 # Clean up
 if os.path.exists("SpiritedAway.spec"):
-    os.remove("SpiritedAway.spec")
-
-print("\nBuild completed! Executable can be found in the 'dist' folder.") 
+    os.remove("SpiritedAway.spec") 

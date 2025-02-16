@@ -3,21 +3,24 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Trigger on version tags
+      - 'v*'
 
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write  # This is important for creating releases
     
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
-        fetch-depth: 0  # Fetch all history for changelog generation
+        fetch-depth: 0
     
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
+        cache: 'pip'
     
     - name: Install dependencies
       run: |
@@ -25,12 +28,16 @@ jobs:
         pip install -r requirements.txt
     
     - name: Build executable
-      run: python build.py
+      run: |
+        python build.py
+        dir dist
     
     - name: Get version from tag
       id: get_version
-      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
-      shell: bash
+      run: |
+        $version = "${{ github.ref_name }}"
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+      shell: pwsh
     
     - name: Generate changelog
       id: changelog
@@ -39,17 +46,13 @@ jobs:
         myToken: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Create Release
-      id: create_release
       uses: softprops/action-gh-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: startsWith(github.ref, 'refs/tags/')
       with:
-        tag_name: ${{ github.ref }}
         name: Release ${{ steps.get_version.outputs.VERSION }}
         body: |
           ## What's Changed
           ${{ steps.changelog.outputs.changelog }}
         draft: false
         prerelease: false
-        files: |
-          dist/SpiritedAway.exe 
+        files: ./dist/SpiritedAway.exe 
