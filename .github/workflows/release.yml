@@ -27,10 +27,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
-    - name: Build executable
+    - name: Create VERSION file
       run: |
-        python build.py
-        dir dist
+        $version = "${{ github.ref_name }}" -replace '^v',''
+        $version | Out-File -FilePath VERSION -Encoding utf8 -NoNewline
+      shell: pwsh
+    
+    - name: Build executable
+      run: python build.py
     
     - name: Get version from tag
       id: get_version
