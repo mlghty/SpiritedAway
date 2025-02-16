@@ -1,6 +1,6 @@
-<div align="center">
-  <img src="images/XD.png" width="64" height="64" alt="SpiritedAway Icon" style="vertical-align: middle">
-  <h1 style="display: inline-block; margin-left: 10px; vertical-align: middle">SpiritedAway</h1>
+<div style="display: flex; align-items: center;">
+  <img src="images/XD.png" width="64" height="64" alt="SpiritedAway Icon">
+  <h1 style="margin-left: 10px;">SpiritedAway</h1>
 </div>
 
 Minimizes all windows after certain amount of time has elapsed, restores all windows once user activity is detected. Made because SweptAway was outdated and SpirtedAway was made for OSX.
