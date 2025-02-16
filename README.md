@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="images/XD.png" width="128" height="128" alt="SpiritedAway Icon">
+</p>
+
 # SpiritedAway
 Minimizes all windows after certain amount of time has elapsed, restores all windows once user activity is detected. Made because SweptAway was outdated and SpirtedAway was made for OSX.
 
