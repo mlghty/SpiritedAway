@@ -5,17 +5,23 @@ import sys
 import re
 
 def get_version():
-    """Get version from git tag or return default"""
+    """Get version from VERSION file or git tag"""
     try:
-        with os.popen('git describe --tags --abbrev=0') as stream:
-            version = stream.read().strip()
-        if not version:
-            return '1.0.0'  # Default version
-        # Remove 'v' prefix if present
-        version = re.sub('^v', '', version)
-        return version
+        # First try to read from VERSION file
+        with open('VERSION', 'r') as f:
+            version = f.read().strip()
+            return version
     except:
-        return '1.0.0'  # Default version
+        # Fallback to git tag
+        try:
+            with os.popen('git describe --tags --abbrev=0') as stream:
+                version = stream.read().strip()
+            if not version:
+                return '1.0.0'
+            version = re.sub('^v', '', version)
+            return version
+        except:
+            return '1.0.0'
 
 # Update version.txt with current version
 version = get_version()
