@@ -3,7 +3,7 @@
   <h1 style="margin-left: 10px;">SpiritedAway</h1>
 </div>
 
-Minimizes all windows after certain amount of time has elapsed, restores all windows once user activity is detected. Made because SweptAway was outdated and SpirtedAway was made for OSX.
+Minimizes all windows after certain amount of time has elapsed, restores all windows once user activity is detected. Available for both Windows and macOS.
 
 ## Inspiration
 + https://etherealmind.com/osx-spirited-away-productivity-tool/
@@ -14,13 +14,15 @@ Minimizes all windows after certain amount of time has elapsed, restores all win
 - Restores windows when activity is detected
 - Customizable inactivity timeout (1-600 seconds or 1-60 minutes)
 - System tray integration with status notifications
-- Start with Windows option
+- Start with Windows/macOS option
 - Start minimized option
 - Auto-start monitoring option
 - Activity logging with log rotation (5MB limit)
 - Clean and intuitive user interface
 
 ## Requirements
+
+### Windows
 - Windows OS
 - Python 3.10 or higher
 - Required packages:
@@ -29,13 +31,26 @@ Minimizes all windows after certain amount of time has elapsed, restores all win
   - pyautogui >= 0.9.53
   - pyinstaller == 5.13.2 (for building)
 
+### macOS
+- macOS 10.14 or higher
+- Python 3.10 or higher
+- Required packages:
+  - PyQt5 >= 5.15.0
+  - pyautogui >= 0.9.53
+  - pyobjc-framework-Quartz >= 9.0
+  - pyobjc-framework-AppKit >= 9.0
+  - pyinstaller == 5.13.2 (for building)
+
 ## Installation
 1. Download the latest release from the [Releases](https://github.com/yourusername/SpiritedAway/releases) page
-   - Or build from source (see Building section)
+   - For Windows: Download SpiritedAway.exe
+   - For macOS: Download SpiritedAway-macOS.zip, extract and move to Applications folder
 2. Run the executable
-3. Optional: Enable "Start with Windows" for automatic startup
+3. Optional: Enable "Start with Windows/macOS" for automatic startup
 
 ## Building from Source
+
+### Windows
 1. Clone the repository
    ```bash
    git clone https://github.com/yourusername/SpiritedAway.git
@@ -52,7 +67,24 @@ Minimizes all windows after certain amount of time has elapsed, restores all win
    python build.py
    ```
 
-The executable will be created in the `dist` folder.
+### macOS
+1. Clone the repository
+   ```bash
+   git clone https://github.com/yourusername/SpiritedAway.git
+   cd SpiritedAway
+   ```
+
+2. Install requirements
+   ```bash
+   pip install -r requirements_mac.txt
+   ```
+
+3. Build the application
+   ```bash
+   python build_mac.py
+   ```
+
+The executable/application will be created in the `dist` folder.
 
 ## Usage
 - Launch the application
@@ -61,22 +93,31 @@ The executable will be created in the `dist` folder.
 - The application will:
   - Minimize all windows after the set inactivity period
   - Restore windows when mouse/keyboard activity is detected
-  - Show notifications in the system tray
+  - Show notifications in the system tray/menu bar
   - Log all activities
 
 ### Settings
 - **Inactivity timeout**: Set the time before windows are minimized (1-600 seconds or 1-60 minutes)
-- **Start with Windows**: Automatically start the application on Windows startup
-- **Start Minimized**: Start the application minimized to system tray
+- **Start with Windows/macOS**: Automatically start the application on system startup
+- **Start Minimized**: Start the application minimized to system tray/menu bar
 - **Start monitoring on launch**: Begin monitoring automatically when the application starts
 
-### System Tray
+### System Tray/Menu Bar
 - Left-click: Show menu
-- Right-click: Show menu
+- Right-click: Show menu (Windows only)
 - Menu options:
   - Show: Display the main window
-  - Hide: Minimize to system tray
+  - Hide: Minimize to system tray/menu bar
   - Quit: Close the application
+
+## macOS Permissions
+On macOS, SpiritedAway requires the following permissions:
+- **Accessibility**: To monitor user activity and control windows
+- **Automation**: To minimize and restore windows
+
+To grant these permissions:
+1. Go to System Preferences > Security & Privacy > Privacy
+2. Add SpiritedAway to both the Accessibility and Automation lists
 
 ## Release Process
 - Versioning follows semantic versioning (X.Y.Z)
@@ -85,9 +126,9 @@ The executable will be created in the `dist` folder.
   1. Tag the commit with version number: `git tag vX.Y.Z`
   2. Push the tag: `git push origin vX.Y.Z`
   3. GitHub Actions will automatically:
-     - Build the executable
+     - Build the Windows and macOS executables
      - Create a GitHub release
-     - Attach the built executable
+     - Attach the built executables
      - Generate changelog from commits
      - Publish the release
 
