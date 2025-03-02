@@ -77,11 +77,18 @@ jobs:
         cd dist
         zip -r SpiritedAway-macOS.zip SpiritedAway.app
     
-    - name: Upload macOS artifact
+    - name: Upload macOS artifact (zip)
       uses: actions/upload-artifact@v3
       with:
-        name: macos-application
+        name: macos-application-zip
         path: ./dist/SpiritedAway-macOS.zip
+        retention-days: 1
+        
+    - name: Upload macOS artifact (app)
+      uses: actions/upload-artifact@v3
+      with:
+        name: macos-application-app
+        path: ./dist/SpiritedAway.app
         retention-days: 1
 
   create-release:
@@ -101,11 +108,17 @@ jobs:
         name: windows-executable
         path: ./dist
     
-    - name: Download macOS artifact
+    - name: Download macOS artifact (zip)
       uses: actions/download-artifact@v3
       with:
-        name: macos-application
+        name: macos-application-zip
         path: ./dist
+        
+    - name: Download macOS artifact (app)
+      uses: actions/download-artifact@v3
+      with:
+        name: macos-application-app
+        path: ./dist/SpiritedAway.app
     
     - name: Get version from tag
       id: get_version
@@ -129,9 +142,11 @@ jobs:
           
           ## Downloads
           - Windows: SpiritedAway.exe
-          - macOS: SpiritedAway-macOS.zip
+          - macOS (zip): SpiritedAway-macOS.zip
+          - macOS (app): SpiritedAway.app
         draft: false
         prerelease: false
         files: |
           ./dist/SpiritedAway.exe
-          ./dist/SpiritedAway-macOS.zip 
+          ./dist/SpiritedAway-macOS.zip
+          ./dist/SpiritedAway.app/**/* 
