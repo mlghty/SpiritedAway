@@ -1,4 +1,4 @@
 PyQt5>=5.15.0
 pyautogui>=0.9.53
 pyinstaller==5.13.2
-AppKit>=0.2.8 
+pywin32>=228 
