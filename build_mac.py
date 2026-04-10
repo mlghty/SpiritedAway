@@ -32,7 +32,6 @@ def check_requirements():
     """Check if all required packages are installed for macOS"""
     try:
         import PyQt5
-        import pyautogui
         import AppKit
         import Quartz
     except ImportError as e:
@@ -63,7 +62,6 @@ PyInstaller.__main__.run([
     '--windowed',
     '--icon=./images/XD.png',  # macOS can use PNG directly
     '--add-data=./images/XD.png:images/',  # Note the colon instead of semicolon for macOS
-    '--hidden-import=pyautogui',
     '--hidden-import=AppKit',
     '--hidden-import=Quartz',
     '--exclude-module=matplotlib',
