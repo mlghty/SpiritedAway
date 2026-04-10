@@ -5,13 +5,12 @@ import os
 import json
 import threading
 import subprocess
-from PyQt5.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QAction, 
-                            QLabel, QSpinBox, QGridLayout, QRadioButton, QCheckBox, 
+from PyQt5.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QMenu, QAction,
+                            QLabel, QSpinBox, QGridLayout, QRadioButton, QCheckBox,
                             QTextEdit, QVBoxLayout, QHBoxLayout, QGroupBox, QFrame,
-                            QComboBox, QPushButton)
+                            QComboBox, QPushButton, QMessageBox)
 from PyQt5.QtCore import QTime, QDate, QTimer, Qt
 from PyQt5.QtGui import QIcon
-import pyautogui
 
 # For macOS specific functionality
 try:
@@ -25,6 +24,43 @@ except ImportError:
     print("Error: Required macOS libraries not found.")
     print("Please install them with: pip install pyobjc-framework-Quartz pyobjc-framework-AppKit")
     sys.exit(1)
+
+
+def check_accessibility_permissions():
+    """Check if the app has accessibility permissions needed for monitoring input."""
+    try:
+        # Attempt to read the last input event time — this requires accessibility access
+        CGEventSourceSecondsSinceLastEventType(
+            kCGEventSourceStateHIDSystemState,
+            kCGAnyInputEventType
+        )
+        return True
+    except Exception:
+        return False
+
+
+def hide_all_windows():
+    """Hide all application windows using AppleScript."""
+    try:
+        subprocess.run(
+            ['osascript', '-e',
+             'tell application "System Events" to set visible of every process whose visible is true to false'],
+            capture_output=True, text=True, timeout=5
+        )
+    except Exception:
+        pass
+
+
+def show_all_windows():
+    """Restore all application windows using AppleScript."""
+    try:
+        subprocess.run(
+            ['osascript', '-e',
+             'tell application "System Events" to set visible of every process to true'],
+            capture_output=True, text=True, timeout=5
+        )
+    except Exception:
+        pass
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -62,7 +98,7 @@ class SpiritedAway(QWidget):
         self.height = 500
         self.image_path = resource_path('./images/XD.png')
         self.settings_file = os.path.join(os.path.expanduser("~"), ".spiritedaway_settings.json")
-        self.load_settings()
+        self._load_settings_values()
 
         self.setFixedWidth(self.width)
         self.setFixedHeight(self.height)
@@ -70,7 +106,7 @@ class SpiritedAway(QWidget):
         # Check for user inactivity
         self.last_input_time = time.time()
         self.last_cursor_pos = NSEvent.mouseLocation()
-        self.INACTIVITY_TIMEOUT = 500  # Timeout in seconds
+        # INACTIVITY_TIMEOUT is set by _load_settings_values() above (defaults to 500)
         self.MINIMIZED = False
         self.START = False
         self.monitoring_thread = None
@@ -161,6 +197,9 @@ class SpiritedAway(QWidget):
         self.autostart_monitoring_checkbox.setChecked(self.load_autostart_monitoring_setting())
         self.autostart_monitoring_checkbox.stateChanged.connect(self.toggle_autostart_monitoring)
         control_layout.addWidget(self.autostart_monitoring_checkbox, 4, 0, 1, 2)
+
+        # Apply saved settings to UI widgets now that they exist
+        self._apply_settings_to_ui()
 
         # Add control group to main layout
         main_layout.addWidget(control_group)
@@ -257,8 +296,8 @@ class SpiritedAway(QWidget):
                 if current_time - self.last_input_time > self.INACTIVITY_TIMEOUT:
                     if not self.MINIMIZED:
                         self.MINIMIZED = True
-                        # Use fn+F11 to show desktop (minimize all windows)
-                        pyautogui.hotkey('fn', 'f11')
+                        # Hide all application windows via AppleScript
+                        hide_all_windows()
                         self.log_message("Windows minimized due to inactivity")
                         self.tray_icon.showMessage(
                             self.app_name,
@@ -268,8 +307,8 @@ class SpiritedAway(QWidget):
                         )
                 else:
                     if self.MINIMIZED:
-                        # Use fn+F11 again to restore windows
-                        pyautogui.hotkey('fn', 'f11')
+                        # Restore all application windows via AppleScript
+                        show_all_windows()
                         self.MINIMIZED = False
                         self.log_message("Windows restored due to activity")
                         self.tray_icon.showMessage(
@@ -438,25 +477,25 @@ class SpiritedAway(QWidget):
                 
             if state:
                 # Get the path of the current executable
+                program_args = []
                 if getattr(sys, 'frozen', False):
                     # Running as compiled executable
-                    app_path = sys.executable
+                    program_args.append(sys.executable)
                 else:
-                    # Running as script
-                    app_path = os.path.abspath(sys.argv[0])
-                    # If running as script, ensure we're using python to execute it
-                    if app_path.endswith('.py'):
-                        python_exe = sys.executable
-                        app_path = f'{python_exe} {app_path}'
-                
+                    # Running as script — need python and script as separate args
+                    program_args.append(sys.executable)
+                    program_args.append(os.path.abspath(sys.argv[0]))
+
                 # Add startup parameters
-                startup_args = []
                 if self.start_minimized_checkbox.isChecked():
-                    startup_args.append('--start-minimized')
+                    program_args.append('--start-minimized')
                 if self.autostart_monitoring_checkbox.isChecked():
-                    startup_args.append('--start-monitoring')
-                
+                    program_args.append('--start-monitoring')
+
                 # Create the plist file content
+                args_xml = "\n".join(
+                    [f'        <string>{arg}</string>' for arg in program_args]
+                )
                 plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -465,8 +504,7 @@ class SpiritedAway(QWidget):
     <string>com.spiritedaway.app</string>
     <key>ProgramArguments</key>
     <array>
-        <string>{app_path}</string>
-        {"".join([f'<string>{arg}</string>' for arg in startup_args])}
+{args_xml}
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -481,7 +519,10 @@ class SpiritedAway(QWidget):
                     f.write(plist_content)
                 
                 # Load the launch agent
-                subprocess.run(["launchctl", "load", plist_file])
+                result = subprocess.run(["launchctl", "load", plist_file],
+                                        capture_output=True, text=True)
+                if result.returncode != 0:
+                    self.log_message(f"Warning: launchctl load failed: {result.stderr.strip()}")
                 
                 self.log_message("Autostart enabled - Application will start with macOS")
                 self.tray_icon.showMessage(
@@ -493,7 +534,8 @@ class SpiritedAway(QWidget):
             else:
                 # Unload and remove the launch agent if it exists
                 if os.path.exists(plist_file):
-                    subprocess.run(["launchctl", "unload", plist_file])
+                    subprocess.run(["launchctl", "unload", plist_file],
+                                   capture_output=True, text=True)
                     os.remove(plist_file)
                     
                 self.log_message("Autostart disabled - Application will not start with macOS")
@@ -518,24 +560,29 @@ class SpiritedAway(QWidget):
         plist_file = os.path.expanduser("~/Library/LaunchAgents/com.spiritedaway.app.plist")
         return os.path.exists(plist_file)
 
-    def load_settings(self):
-        """Load saved settings"""
+    def _load_settings_values(self):
+        """Load saved settings values (before UI widgets exist)."""
+        self._saved_unit = 'seconds'
         try:
             if os.path.exists(self.settings_file):
                 with open(self.settings_file, 'r') as f:
                     settings = json.load(f)
                     self.INACTIVITY_TIMEOUT = settings.get('timeout', 500)
-                    saved_unit = settings.get('unit', 'seconds')
-                    
-                    # Set the correct unit and value in the UI
-                    if saved_unit == "minutes":
-                        self.timeout_unit_selector.setCurrentText("minutes")
-                        self.timeout_spinbox.setValue(self.INACTIVITY_TIMEOUT // 60)
-                    else:
-                        self.timeout_unit_selector.setCurrentText("seconds")
-                        self.timeout_spinbox.setValue(self.INACTIVITY_TIMEOUT)
+                    self._saved_unit = settings.get('unit', 'seconds')
         except Exception:
             self.INACTIVITY_TIMEOUT = 500
+
+    def _apply_settings_to_ui(self):
+        """Apply loaded settings to UI widgets (after widgets are created)."""
+        if self._saved_unit == "minutes":
+            self.timeout_unit_selector.setCurrentText("minutes")
+            self.timeout_spinbox.setRange(1, 60)
+            self.timeout_spinbox.setValue(max(1, self.INACTIVITY_TIMEOUT // 60))
+        else:
+            self.timeout_unit_selector.setCurrentText("seconds")
+            self.timeout_spinbox.setRange(1, 600)
+            self.timeout_spinbox.setValue(self.INACTIVITY_TIMEOUT)
+        self.update_conversion_label()
 
     def save_settings(self):
         """Save current settings"""
@@ -675,7 +722,8 @@ class SpiritedAway(QWidget):
             # Remove from startup
             plist_file = os.path.expanduser("~/Library/LaunchAgents/com.spiritedaway.app.plist")
             if os.path.exists(plist_file):
-                subprocess.run(["launchctl", "unload", plist_file])
+                subprocess.run(["launchctl", "unload", plist_file],
+                               capture_output=True, text=True)
                 os.remove(plist_file)
         except Exception as e:
             print(f"Error cleaning up app data: {str(e)}")
@@ -693,11 +741,24 @@ class SpiritedAway(QWidget):
 def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    
+
+    # Check accessibility permissions before anything else
+    if not check_accessibility_permissions():
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Accessibility Permission Required")
+        msg.setText(
+            "SpiritedAway needs Accessibility permission to monitor user activity.\n\n"
+            "Please grant access in:\n"
+            "System Settings > Privacy & Security > Accessibility\n\n"
+            "The app will continue, but monitoring may not work correctly."
+        )
+        msg.exec_()
+
     # Parse command line arguments
     start_minimized = '--start-minimized' in sys.argv
     start_monitoring = '--start-monitoring' in sys.argv
-    
+
     # Create the main window
     spirited_away = SpiritedAway()
     
