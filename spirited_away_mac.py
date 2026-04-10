@@ -198,9 +198,6 @@ class SpiritedAway(QWidget):
         self.autostart_monitoring_checkbox.stateChanged.connect(self.toggle_autostart_monitoring)
         control_layout.addWidget(self.autostart_monitoring_checkbox, 4, 0, 1, 2)
 
-        # Apply saved settings to UI widgets now that they exist
-        self._apply_settings_to_ui()
-
         # Add control group to main layout
         main_layout.addWidget(control_group)
 
@@ -235,6 +232,9 @@ class SpiritedAway(QWidget):
         self.status_label = QLabel("Status: Monitoring stopped")
         self.status_label.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(self.status_label)
+
+        # Apply saved settings to UI widgets now that all widgets exist
+        self._apply_settings_to_ui()
 
         self.init_ui()
         self.log_message("Application started")
